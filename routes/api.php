@@ -24,4 +24,6 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/property', [PropertyController::class, 'index']);
     Route::post('/property/store-or-update', [PropertyController::class, 'storeOrUpdate']);
     Route::get('/property/{property}', [PropertyController::class, 'show']);
+    Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
+
 });

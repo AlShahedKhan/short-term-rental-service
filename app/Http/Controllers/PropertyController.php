@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\AuthHelper;
 use App\Models\Property;
 use App\Traits\ApiResponse;
 use App\Services\PropertyService;
@@ -44,6 +45,37 @@ class PropertyController extends Controller
             });
 
             return $this->successResponse('Properties retrieved successfully.', $formatted);
+        });
+    }
+
+    public function adminIndex()
+    {
+        return $this->safeCall(function () {
+            AuthHelper::checkAdmin();
+
+            $properties = \App\Models\Property::with('photos', 'landlord')
+                ->latest()
+                ->get();
+
+                $formatted = $properties->map(function ($property) {
+                    return [
+                        'id' => $property->id,
+                        'zip_code' => $property->zip_code,
+                        'bedroom_count' => $property->bedroom_count,
+                        'bathroom_count' => $property->bathroom_count,
+                        'highlight' => $property->highlight,
+                        'key_amenities' => $property->key_amenities,
+                        'photos' => $property->photos->map(fn($photo) => url('storage/' . $photo->photo_path))->toArray(),
+                        'landlord' => [
+                            'id' => $property->landlord->id,
+                            'name' => $property->landlord->first_name . ' ' . $property->landlord->last_name,
+                            'email' => $property->landlord->email,
+                        ],
+                    ];
+                });
+
+
+            return $this->successResponse('All properties retrieved successfully (admin access).', $formatted);
         });
     }
 

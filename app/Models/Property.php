@@ -25,4 +25,9 @@ class Property extends Model
     {
         return $this->hasMany(PropertyPhoto::class);
     }
+
+    public function landlord()
+    {
+        return $this->belongsTo(User::class, 'landlord_id');
+    }
 }
