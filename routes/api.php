@@ -21,6 +21,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/get-all-contact', [ContactController::class, 'index'])->name('contact.index');
     Route::get('/get-contact/{contact}', [ContactController::class, 'show'])->name('contact.show');
+    Route::get('/property', [PropertyController::class, 'index']);
     Route::post('/property/store-or-update', [PropertyController::class, 'storeOrUpdate']);
-
+    Route::get('/property/{property}', [PropertyController::class, 'show']);
 });

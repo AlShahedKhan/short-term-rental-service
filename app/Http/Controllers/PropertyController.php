@@ -19,22 +19,35 @@ class PropertyController extends Controller
         $this->propertyService = $propertyService;
     }
 
-    // public function storeOrUpdate(StoreOrUpdatePropertyRequest $request)
-    // {
-    //     return $this->safeCall(function () use ($request) {
-    //         $landlordId = Auth::id();
+    public function index()
+    {
+        return $this->safeCall(function () {
+            $landlordId = Auth::id();
 
-    //         // Handle photos (force array)
-    //         $photos = $request->file('photos', []);
-    //         if ($photos instanceof \Illuminate\Http\UploadedFile) {
-    //             $photos = [$photos];
-    //         }
+            $properties = \App\Models\Property::with('photos')
+                ->where('landlord_id', $landlordId)
+                ->latest()
+                ->get();
 
-    //         $property = $this->propertyService->createProperty($landlordId, $request->validated(), $photos);
+            $formatted = $properties->map(function ($property) {
+                return [
+                    'id' => $property->id,
+                    'zip_code' => $property->zip_code,
+                    'bedroom_count' => $property->bedroom_count,
+                    'bathroom_count' => $property->bathroom_count,
+                    'highlight' => $property->highlight,
+                    'key_amenities' => $property->key_amenities,
+                    'photos' => $property->photos->map(function ($photo) {
+                        return url('storage/' . $photo->photo_path);
+                    })->toArray(),
+                ];
+            });
 
-    //         return $this->successResponse('Property details saved successfully.', $property);
-    //     });
-    // }
+            return $this->successResponse('Properties retrieved successfully.', $formatted);
+        });
+    }
+
+
     public function storeOrUpdate(StoreOrUpdatePropertyRequest $request)
     {
         return $this->safeCall(function () use ($request) {
@@ -63,6 +76,25 @@ class PropertyController extends Controller
                     $this->propertyService->createProperty($landlordId, $request->validated(), $photos)
                 );
             }
+        });
+    }
+
+    public function show(Property $property)
+    {
+        return $this->safeCall(function () use ($property) {
+            $photoUrls = $property->photos->map(function ($photo) {
+                return url('storage/' . $photo->photo_path);
+            })->toArray();
+
+            return $this->successResponse('Property retrieved successfully.', [
+                'id' => $property->id,
+                'zip_code' => $property->zip_code,
+                'bedroom_count' => $property->bedroom_count,
+                'bathroom_count' => $property->bathroom_count,
+                'highlight' => $property->highlight,
+                'key_amenities' => $property->key_amenities,
+                'photos' => $photoUrls,
+            ]);
         });
     }
 }
