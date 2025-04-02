@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -20,4 +21,6 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/get-all-contact', [ContactController::class, 'index'])->name('contact.index');
     Route::get('/get-contact/{contact}', [ContactController::class, 'show'])->name('contact.show');
+    Route::post('/property/store-or-update', [PropertyController::class, 'storeOrUpdate']);
+
 });
