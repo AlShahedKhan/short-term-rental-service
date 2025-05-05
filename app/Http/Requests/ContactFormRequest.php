@@ -14,14 +14,25 @@ class ContactFormRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:25',
+            'last_name' => 'required|string|max:25',
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^\+?[0-9]{1,4}?[0-9]{7,14}$/',
+                'max:15'
+            ],
             'email' => [
                 'required',
                 'email:rfc,dns',
                 'max:50'
             ],
-            'subject' => 'required|string|max:255',
             'message' => 'required|string',
+            'is_read' => [
+                'sometimes',
+                'boolean',
+                Rule::in([0, 1])
+            ],
         ];
     }
 }

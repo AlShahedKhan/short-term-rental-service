@@ -15,7 +15,7 @@ class ContactController extends Controller
     public function index()
     {
         AuthHelper::checkAdmin();
-        $contacts = Contact::paginate(500);
+        $contacts = Contact::paginate(25);
         ProcessContactData::dispatch($contacts);
         return $this->successResponse('Contacts fetched successfully!', ['data' => $contacts]);
     }
