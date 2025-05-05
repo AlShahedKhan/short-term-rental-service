@@ -6,6 +6,7 @@ use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\PropertyListingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 
 Route::post('register', [RegisterController::class, 'register']);
@@ -31,6 +32,10 @@ Route::group(['middleware' => ['auth:api']], function () {
 
     Route::get('/get-recent-contacts', [ContactController::class, 'getRecentContacts']);
     Route::get('/count-contacts', [ContactController::class, 'countContacts']);
+
+    Route::get('/get-property-list', [PropertyListingController::class, 'index']);
+    Route::post('/property-listing/{id?}', [PropertyListingController::class, 'storeOrUpdate']);
+
 
     Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
 
