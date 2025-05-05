@@ -12,6 +12,19 @@ use Illuminate\Validation\ValidationException;
 class PropertyController extends Controller
 {
     use ApiResponse;
+
+    public function search(Request $request)
+    {
+        $query = Property::query();
+        if ($request->has('email')) {
+            $query->where('email', 'like', '%' . $request->input('email') . '%');
+        }
+        if ($request->has('phone_number')) {
+            $query->where('phone_number', 'like', '%' . $request->input('phone_number') . '%');
+        }
+        $properties = $query->paginate(10);
+        return $this->successResponse('Properties search results.', $properties);
+    }
     public function index(Request $request)
     {
         // Retrieve properties with only the required fields, sorted by 'created_at' in descending order
@@ -84,16 +97,11 @@ class PropertyController extends Controller
 
     public function show($id)
     {
-        // Find the property by ID, including its associated photos
         $property = Property::with('photos')->find($id);
 
-        // Check if the property was found
         if (!$property) {
-            // If property not found, return a 404 response
             return $this->errorResponse('Property not found.', 404);
         }
-
-        // Return the property details along with associated photos
         return $this->successResponse('Property retrieved successfully.', $property);
     }
 }
