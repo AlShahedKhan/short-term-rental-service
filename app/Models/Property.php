@@ -9,25 +9,25 @@ class Property extends Model
     protected $table = 'properties';
 
     protected $fillable = [
-        'landlord_id',
-        'zip_code',
-        'bedroom_count',
-        'bathroom_count',
-        'highlights',
-        'key_amenities',
+
+        'first_name',
+        'last_name',
+        'phone_number',
+        'email',
+        'property_type',
+        'property_address',
+        'property_description',
+        'income_goals',
+        'is_managed_by_rejuvenest',
     ];
+
 
     protected $casts = [
-        'key_amenities' => 'array',
+        'property_type' => 'array', // Automatically cast it as an array
     ];
-
     public function photos()
     {
         return $this->hasMany(PropertyPhoto::class);
     }
 
-    public function landlord()
-    {
-        return $this->belongsTo(User::class, 'landlord_id');
-    }
 }

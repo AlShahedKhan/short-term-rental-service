@@ -2,131 +2,84 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\AuthHelper;
-use App\Models\Property;
+use App\Jobs\StoreOrUpdatePropertyJob;
 use App\Traits\ApiResponse;
-use App\Services\PropertyService;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\StoreOrUpdatePropertyRequest;
+use Illuminate\Http\Request;
+use App\Models\Property;
+use App\Models\PropertyPhoto;
+use Illuminate\Validation\ValidationException;
 
 class PropertyController extends Controller
 {
     use ApiResponse;
-
-    protected $propertyService;
-
-    public function __construct(PropertyService $propertyService)
+    public function index(Request $request)
     {
-        $this->propertyService = $propertyService;
+        // Retrieve properties with only the required fields, sorted by 'created_at' in descending order
+        $properties = Property::select('first_name', 'last_name', 'phone_number', 'email', 'created_at')
+            ->orderBy('created_at', 'desc')  // Sort by 'created_at' in descending order
+            ->paginate(10);  // Adjust the pagination per page
+
+        // Return the paginated items directly in the response (no wrapping in "data" key)
+        return $this->successResponse('Properties retrieved successfully.', [
+            'properties' => $properties->items(),  // List of items on the current page
+            'pagination' => [
+                'current_page' => $properties->currentPage(),
+                'total_pages' => $properties->lastPage(),
+                'total_items' => $properties->total(),
+            ]
+        ]);
     }
 
-    public function index()
+    public function StoreOrUpdateProperty(Request $request, $id = null)
     {
-        return $this->safeCall(function () {
-            $landlordId = Auth::id();
+        return $this->safeCall(function () use ($request, $id) {
+            $propertyData = json_decode($request->input('data'), true);
 
-            $properties = \App\Models\Property::with('photos')
-                ->where('landlord_id', $landlordId)
-                ->latest()
-                ->get();
+            // Validate the incoming property data
+            $validatedData = \Validator::make($propertyData, [
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'phone_number' => 'required|string|max:15',
+                'email' => 'required|email|max:255',
+                'property_type' => 'required|array',
+                'property_type.*' => 'string', // Ensure each item in the array is a string
+                'property_address' => 'required|string|max:500',
+                'property_description' => 'nullable|string|max:1000',
+                'income_goals' => 'nullable|string|max:500',
+                'photos' => 'nullable|array',
+                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg',
+                'is_managed_by_rejuvenest' => 'nullable|boolean',
+            ]);
 
-            $formatted = $properties->map(function ($property) {
-                return [
-                    'id' => $property->id,
-                    'zip_code' => $property->zip_code,
-                    'bedroom_count' => $property->bedroom_count,
-                    'bathroom_count' => $property->bathroom_count,
-                    'highlight' => $property->highlight,
-                    'key_amenities' => $property->key_amenities,
-                    'photos' => $property->photos->map(function ($photo) {
-                        return url('storage/' . $photo->photo_path);
-                    })->toArray(),
-                ];
-            });
-
-            return $this->successResponse('Properties retrieved successfully.', $formatted);
-        });
-    }
-
-    public function adminIndex()
-    {
-        return $this->safeCall(function () {
-            AuthHelper::checkAdmin();
-
-            $properties = \App\Models\Property::with('photos', 'landlord')
-                ->latest()
-                ->get();
-
-                $formatted = $properties->map(function ($property) {
-                    return [
-                        'id' => $property->id,
-                        'zip_code' => $property->zip_code,
-                        'bedroom_count' => $property->bedroom_count,
-                        'bathroom_count' => $property->bathroom_count,
-                        'highlight' => $property->highlight,
-                        'key_amenities' => $property->key_amenities,
-                        'photos' => $property->photos->map(fn($photo) => url('storage/' . $photo->photo_path))->toArray(),
-                        'landlord' => [
-                            'id' => $property->landlord->id,
-                            'name' => $property->landlord->first_name . ' ' . $property->landlord->last_name,
-                            'email' => $property->landlord->email,
-                        ],
-                    ];
-                });
-
-
-            return $this->successResponse('All properties retrieved successfully (admin access).', $formatted);
-        });
-    }
-
-
-    public function storeOrUpdate(StoreOrUpdatePropertyRequest $request)
-    {
-        return $this->safeCall(function () use ($request) {
-            $landlordId = Auth::id();
-
-            // Get ID from query string
-            $id = $request->query('id');
-
-            // Ensure photos are always an array
-            $photos = $request->file('photos', []);
-            if ($photos instanceof \Illuminate\Http\UploadedFile) {
-                $photos = [$photos];
+            // If validation fails, throw ValidationException to be handled by the trait
+            if ($validatedData->fails()) {
+                throw new ValidationException($validatedData);
             }
 
-            if ($id) {
-                // Update existing property
-                $property = Property::findOrFail($id);
-                return $this->successResponse(
-                    'Property updated successfully.',
-                    $this->propertyService->updateProperty($landlordId, $property, $request->validated(), $photos)
-                );
-            } else {
-                // Create new property
-                return $this->successResponse(
-                    'Property details saved successfully.',
-                    $this->propertyService->createProperty($landlordId, $request->validated(), $photos)
-                );
+            // Save the property immediately to get its ID
+            $property = Property::updateOrCreate(
+                ['id' => $id],  // Update if $id exists, otherwise create a new property
+                $propertyData   // Use validated data from the decoded 'data'
+            );
+
+            // Save the photos to storage and pass their paths to the job
+            $photoPaths = [];
+            if ($request->hasFile('photos')) {
+                $photos = $request->file('photos');
+                foreach ($photos as $photo) {
+                    $photoPaths[] = $photo->store('property_photos', 'public');  // Save photo and get path
+                }
             }
-        });
-    }
 
-    public function show(Property $property)
-    {
-        return $this->safeCall(function () use ($property) {
-            $photoUrls = $property->photos->map(function ($photo) {
-                return url('storage/' . $photo->photo_path);
-            })->toArray();
+            // Dispatch the job to handle the saving of photos asynchronously
+            StoreOrUpdatePropertyJob::dispatch($propertyData, $photoPaths, $property->id);
 
-            return $this->successResponse('Property retrieved successfully.', [
-                'id' => $property->id,
-                'zip_code' => $property->zip_code,
-                'bedroom_count' => $property->bedroom_count,
-                'bathroom_count' => $property->bathroom_count,
-                'highlight' => $property->highlight,
-                'key_amenities' => $property->key_amenities,
-                'photos' => $photoUrls,
+            // Return the property and photos data with the generated ID
+            return $this->successResponse('Property save process has started.', [
+                'property' => array_merge($propertyData, ['id' => $property->id, 'status' => 'processing']),
+                'photos' => $photoPaths       // Return the paths of the uploaded photos
             ]);
         });
     }
 }
+

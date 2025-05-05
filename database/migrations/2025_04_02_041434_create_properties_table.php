@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('landlord_id')->constrained('users')->onDelete('cascade');
-            $table->string('zip_code');
-            $table->unsignedTinyInteger('bedroom_count');
-            $table->unsignedTinyInteger('bathroom_count');
-            $table->text('highlights')->nullable();
-            $table->json('key_amenities')->nullable();
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('phone_number');
+            $table->string('email');
+            $table->json('property_type')->nullable();
+            $table->text('property_address');
+            $table->text('property_description')->nullable();
+            $table->text('income_goals')->nullable();
+            $table->boolean('is_managed_by_rejuvenest')->default(false); // Rejuvenest commission checkbox
             $table->timestamps();
         });
     }

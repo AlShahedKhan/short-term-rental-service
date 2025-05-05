@@ -8,6 +8,7 @@ use App\Traits\ApiResponse;
 use App\Jobs\Contact\SendContactEmail;
 use App\Jobs\Contact\ProcessContactData;
 use App\Http\Requests\ContactFormRequest;
+use Illuminate\Support\Facades\Log;
 
 class ContactController extends Controller
 {
@@ -21,6 +22,7 @@ class ContactController extends Controller
     }
     public function store(ContactFormRequest $request)
     {
+        Log::info('ContactFormRequest');
         $contact = Contact::create($request->validated());
         SendContactEmail::dispatch($contact);
         return response()->json(['message' => 'Contact form submitted successfully!', 'data' => $contact]);
