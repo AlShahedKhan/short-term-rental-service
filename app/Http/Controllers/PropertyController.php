@@ -25,12 +25,30 @@ class PropertyController extends Controller
         $properties = $query->paginate(10);
         return $this->successResponse('Properties search results.', $properties);
     }
-    public function index(Request $request)
+    public function index()
     {
         // Retrieve properties with only the required fields, sorted by 'created_at' in descending order
         $properties = Property::select('first_name', 'last_name', 'phone_number', 'email', 'created_at')
             ->orderBy('created_at', 'desc')  // Sort by 'created_at' in descending order
             ->paginate(10);  // Adjust the pagination per page
+
+        // Return the paginated items directly in the response (no wrapping in "data" key)
+        return $this->successResponse('Properties retrieved successfully.', [
+            'properties' => $properties->items(),  // List of items on the current page
+            'pagination' => [
+                'current_page' => $properties->currentPage(),
+                'total_pages' => $properties->lastPage(),
+                'total_items' => $properties->total(),
+            ]
+        ]);
+    }
+
+    public function getRecentSubmissions()
+    {
+        // Retrieve properties with only the required fields, sorted by 'created_at' in descending order
+        $properties = Property::select('first_name', 'last_name', 'phone_number', 'email', 'created_at')
+            ->orderBy('created_at', 'desc')  // Sort by 'created_at' in descending order
+            ->paginate(3);  // Adjust the pagination per page
 
         // Return the paginated items directly in the response (no wrapping in "data" key)
         return $this->successResponse('Properties retrieved successfully.', [
@@ -64,18 +82,15 @@ class PropertyController extends Controller
                 'is_managed_by_rejuvenest' => 'nullable|boolean',
             ]);
 
-            // If validation fails, throw ValidationException to be handled by the trait
             if ($validatedData->fails()) {
                 throw new ValidationException($validatedData);
             }
 
-            // Save the property immediately to get its ID
             $property = Property::updateOrCreate(
-                ['id' => $id],  // Update if $id exists, otherwise create a new property
-                $propertyData   // Use validated data from the decoded 'data'
+                ['id' => $id],
+                $propertyData
             );
 
-            // Save the photos to storage and pass their paths to the job
             $photoPaths = [];
             if ($request->hasFile('photos')) {
                 $photos = $request->file('photos');
@@ -84,13 +99,11 @@ class PropertyController extends Controller
                 }
             }
 
-            // Dispatch the job to handle the saving of photos asynchronously
             StoreOrUpdatePropertyJob::dispatch($propertyData, $photoPaths, $property->id);
 
-            // Return the property and photos data with the generated ID
             return $this->successResponse('Property save process has started.', [
                 'property' => array_merge($propertyData, ['id' => $property->id, 'status' => 'processing']),
-                'photos' => $photoPaths       // Return the paths of the uploaded photos
+                'photos' => $photoPaths
             ]);
         });
     }
@@ -103,5 +116,13 @@ class PropertyController extends Controller
             return $this->errorResponse('Property not found.', 404);
         }
         return $this->successResponse('Property retrieved successfully.', $property);
+    }
+
+    public function countSubmissions()
+    {
+        return $this->safeCall(function () {
+            $count = Property::count();
+            return $this->successResponse('Total property submissions count.', ['count' => $count]);
+        });
     }
 }
