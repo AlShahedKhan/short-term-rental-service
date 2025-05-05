@@ -81,5 +81,19 @@ class PropertyController extends Controller
             ]);
         });
     }
-}
 
+    public function show($id)
+    {
+        // Find the property by ID, including its associated photos
+        $property = Property::with('photos')->find($id);
+
+        // Check if the property was found
+        if (!$property) {
+            // If property not found, return a 404 response
+            return $this->errorResponse('Property not found.', 404);
+        }
+
+        // Return the property details along with associated photos
+        return $this->successResponse('Property retrieved successfully.', $property);
+    }
+}
