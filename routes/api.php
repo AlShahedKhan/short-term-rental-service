@@ -21,6 +21,8 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 Route::post('/property-store-update/{id?}', [PropertyController::class, 'StoreOrUpdateProperty']);
 
+Route::get('/get-property-listing/{id}', [PropertyListingController::class, 'show']);
+
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/get-all-contact', [ContactController::class, 'index'])->name('contact.index');
     Route::get('/get-contact/{contact}', [ContactController::class, 'show'])->name('contact.show');
@@ -35,6 +37,8 @@ Route::group(['middleware' => ['auth:api']], function () {
 
     Route::get('/get-property-list', [PropertyListingController::class, 'index']);
     Route::post('/property-listing/{id?}', [PropertyListingController::class, 'storeOrUpdate']);
+    Route::get('/count-property-listings', [PropertyListingController::class, 'countPropertyListings']);
+
 
 
     Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
