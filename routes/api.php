@@ -28,6 +28,10 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/get-recent-submissions', [PropertyController::class, 'getRecentSubmissions']);
     Route::get('/property/{property}', [PropertyController::class, 'show']);
     Route::get('/count-submissions', [PropertyController::class, 'countSubmissions']);
+
+    Route::get('/get-recent-contacts', [ContactController::class, 'getRecentContacts']);
+    Route::get('/count-contacts', [ContactController::class, 'countContacts']);
+
     Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
 
 });

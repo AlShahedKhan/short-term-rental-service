@@ -20,6 +20,13 @@ class ContactController extends Controller
         ProcessContactData::dispatch($contacts);
         return $this->successResponse('Contacts fetched successfully!', ['data' => $contacts]);
     }
+    public function getRecentContacts()
+    {
+        AuthHelper::checkAdmin();
+        $contacts = Contact::paginate(4);
+        ProcessContactData::dispatch($contacts);
+        return $this->successResponse('Contacts fetched successfully!', ['data' => $contacts]);
+    }
     public function store(ContactFormRequest $request)
     {
         Log::info('ContactFormRequest');
@@ -34,5 +41,15 @@ class ContactController extends Controller
         $contact->is_read = 1;
         $contact->save();
         return $this->successResponse('Contact details fetched successfully!', ['data' => $contact]);
+    }
+
+    public function countContacts()
+    {
+        return $this->safeCall(function () {
+            $count = Contact::count();
+            return $this->successResponse('Contact count fetched successfully!', ['data' => $count]);
+        }, function ($e) {
+            return $this->errorResponse('Failed to fetch contact count.', 500);
+        });
     }
 }
