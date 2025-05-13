@@ -39,8 +39,6 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::post('/property-listing/{id?}', [PropertyListingController::class, 'storeOrUpdate']);
     Route::get('/count-property-listings', [PropertyListingController::class, 'countPropertyListings']);
 
-
-
     Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
 
 });
