@@ -14,11 +14,19 @@ class PropertyListingController extends Controller
 {
     use ApiResponse;
 
-    public function index(Request $request)
+    public function index(Request $request, $listing_website = null)
     {
-        return $this->safeCall(function () use ($request) {
-            // Retrieve properties, paginated with 12 per page
-            $properties = PropertyListing::paginate(10);
+        return $this->safeCall(function () use ($request, $listing_website) {
+            // If a listing_website is provided, filter the properties based on the website
+            $query = PropertyListing::query();
+
+            if ($listing_website) {
+                // Assuming you have a 'website' column in your PropertyListing table that matches the listing_website
+                $query->where('listing_website', $listing_website);
+            }
+
+            // Retrieve properties, paginated with 10 per page (or change the number to your preference)
+            $properties = $query->paginate(10);
 
             // Map the properties to the required structure
             $propertyData = $properties->map(function ($property) {
@@ -44,6 +52,36 @@ class PropertyListingController extends Controller
             ]);
         });
     }
+    // public function index(Request $request)
+    // {
+    //     return $this->safeCall(function () use ($request) {
+    //         // Retrieve properties, paginated with 12 per page
+    //         $properties = PropertyListing::paginate(10);
+
+    //         // Map the properties to the required structure
+    //         $propertyData = $properties->map(function ($property) {
+    //             return [
+    //                 'image' => asset('storage/' . $property->photo_path), // Assuming photo_path is stored in 'storage'
+    //                 'title' => $property->title,
+    //                 'property_description' => $property->description,
+    //                 'date' => $property->created_at->toDateString(), // Formatting the date
+    //             ];
+    //         });
+
+    //         // Return the success response with pagination data
+    //         return $this->successResponse('Properties fetched successfully.', [
+    //             'data' => $propertyData,
+    //             'pagination' => [
+    //                 'total' => $properties->total(),
+    //                 'current_page' => $properties->currentPage(),
+    //                 'last_page' => $properties->lastPage(),
+    //                 'per_page' => $properties->perPage(),
+    //                 'from' => $properties->firstItem(),
+    //                 'to' => $properties->lastItem(),
+    //             ]
+    //         ]);
+    //     });
+    // }
 
     public function storeOrUpdate(Request $request, $id = null)
     {
@@ -154,4 +192,3 @@ class PropertyListingController extends Controller
         });
     }
 }
-
