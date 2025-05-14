@@ -15,14 +15,14 @@ class ContactController extends Controller
     use ApiResponse;
     public function index()
     {
-        AuthHelper::checkAdmin();
+        // AuthHelper::checkAdmin();
         $contacts = Contact::paginate(25);
         ProcessContactData::dispatch($contacts);
         return $this->successResponse('Contacts fetched successfully!', ['data' => $contacts]);
     }
     public function getRecentContacts()
     {
-        AuthHelper::checkAdmin();
+        // AuthHelper::checkAdmin();
         $contacts = Contact::paginate(4);
         ProcessContactData::dispatch($contacts);
         return $this->successResponse('Contacts fetched successfully!', ['data' => $contacts]);
@@ -37,7 +37,7 @@ class ContactController extends Controller
 
     public function show(Contact $contact)
     {
-        AuthHelper::checkAdmin();
+        // AuthHelper::checkAdmin();
         $contact->is_read = 1;
         $contact->save();
         return $this->successResponse('Contact details fetched successfully!', ['data' => $contact]);

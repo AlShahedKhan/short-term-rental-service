@@ -31,6 +31,7 @@ class PropertyListingController extends Controller
             // Map the properties to the required structure
             $propertyData = $properties->map(function ($property) {
                 return [
+                    'id' => $property->id,
                     'image' => asset('storage/' . $property->photo_path), // Assuming photo_path is stored in 'storage'
                     'title' => $property->title,
                     'property_description' => $property->description,
