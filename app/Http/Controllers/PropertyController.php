@@ -46,7 +46,7 @@ class PropertyController extends Controller
     public function getRecentSubmissions()
     {
         // Retrieve properties with only the required fields, sorted by 'created_at' in descending order
-        $properties = Property::select('first_name', 'last_name', 'phone_number', 'email', 'created_at')
+        $properties = Property::select('id','first_name', 'last_name', 'phone_number', 'email', 'created_at')
             ->orderBy('created_at', 'desc')  // Sort by 'created_at' in descending order
             ->paginate(3);  // Adjust the pagination per page
 
