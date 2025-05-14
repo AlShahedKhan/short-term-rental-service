@@ -23,7 +23,7 @@ Route::post('/property-store-update/{id?}', [PropertyController::class, 'StoreOr
 
 Route::get('/get-property-listing/{id}', [PropertyListingController::class, 'show']);
 
-Route::group(['middleware' => ['auth:api']], function () {
+// Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/get-all-contact', [ContactController::class, 'index'])->name('contact.index');
     Route::get('/get-contact/{contact}', [ContactController::class, 'show'])->name('contact.show');
     Route::get('/property/search', [PropertyController::class, 'search']);
@@ -40,6 +40,6 @@ Route::group(['middleware' => ['auth:api']], function () {
 
     Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
 
-});
+// });
 
 Route::get('/get-property-list/{listing_website?}', [PropertyListingController::class, 'index']);
