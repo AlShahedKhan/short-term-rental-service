@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\PropertyListingPhoto;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class PropertyListingController extends Controller
 {
@@ -53,36 +54,6 @@ class PropertyListingController extends Controller
             ]);
         });
     }
-    // public function index(Request $request)
-    // {
-    //     return $this->safeCall(function () use ($request) {
-    //         // Retrieve properties, paginated with 12 per page
-    //         $properties = PropertyListing::paginate(10);
-
-    //         // Map the properties to the required structure
-    //         $propertyData = $properties->map(function ($property) {
-    //             return [
-    //                 'image' => asset('storage/' . $property->photo_path), // Assuming photo_path is stored in 'storage'
-    //                 'title' => $property->title,
-    //                 'property_description' => $property->description,
-    //                 'date' => $property->created_at->toDateString(), // Formatting the date
-    //             ];
-    //         });
-
-    //         // Return the success response with pagination data
-    //         return $this->successResponse('Properties fetched successfully.', [
-    //             'data' => $propertyData,
-    //             'pagination' => [
-    //                 'total' => $properties->total(),
-    //                 'current_page' => $properties->currentPage(),
-    //                 'last_page' => $properties->lastPage(),
-    //                 'per_page' => $properties->perPage(),
-    //                 'from' => $properties->firstItem(),
-    //                 'to' => $properties->lastItem(),
-    //             ]
-    //         ]);
-    //     });
-    // }
 
     public function storeOrUpdate(Request $request, $id = null)
     {
@@ -99,7 +70,7 @@ class PropertyListingController extends Controller
                 'listing_website_link' => 'required|url',
                 'description' => 'required|string|max:1000',
                 'photos' => 'nullable|array',
-                'photos.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
             ]);
 
             if ($validatedData->fails()) {
@@ -190,6 +161,58 @@ class PropertyListingController extends Controller
             return $this->successResponse('Property listings count retrieved successfully.', [
                 'count' => $count,
             ]);
+        });
+    }
+
+    public function destroy($id)
+    {
+        return $this->safeCall(function () use ($id) {
+            // Log the delete request
+            Log::info('Attempting to delete property listing', ['id' => $id]);
+
+            // Find the property listing with its photos
+            $propertyListing = PropertyListing::with('photos')->find($id);
+
+            if (!$propertyListing) {
+                Log::error('Property listing not found for deletion', ['id' => $id]);
+                return $this->errorResponse('Property listing not found.', 404);
+            }
+
+            try {
+                // Begin transaction
+                DB::beginTransaction();
+
+                // Delete photos from storage and database
+                foreach ($propertyListing->photos as $photo) {
+                    // Delete file from storage
+                    if (Storage::disk('public')->exists($photo->photo_path)) {
+                        Storage::disk('public')->delete($photo->photo_path);
+                        Log::info('Deleted photo file', ['path' => $photo->photo_path]);
+                    }
+                    // Delete photo record
+                    $photo->delete();
+                }
+
+                // Delete the property listing
+                $propertyListing->delete();
+
+                // Commit transaction
+                DB::commit();
+
+                Log::info('Property listing deleted successfully', ['id' => $id]);
+                return $this->successResponse('Property listing deleted successfully.');
+
+            } catch (\Exception $e) {
+                // Rollback transaction on error
+                DB::rollBack();
+
+                Log::error('Failed to delete property listing', [
+                    'id' => $id,
+                    'error' => $e->getMessage()
+                ]);
+
+                return $this->errorResponse('Failed to delete property listing: ' . $e->getMessage(), 500);
+            }
         });
     }
 }

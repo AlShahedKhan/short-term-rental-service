@@ -40,6 +40,9 @@ Route::get('/get-property-listing/{id}', [PropertyListingController::class, 'sho
 
     Route::get('/admin/properties', [PropertyController::class, 'adminIndex']);
 
+    Route::delete('/property/{id}', [PropertyController::class, 'destroy']);
+    Route::delete('/property-listings/{id}', [PropertyListingController::class, 'destroy']);
+
 // });
 
 Route::get('/get-property-list/{listing_website?}', [PropertyListingController::class, 'index']);

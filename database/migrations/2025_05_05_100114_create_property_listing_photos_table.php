@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('property_listing_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_listing_id')->constrained('property_listings')->onDelete('cascade');  // Foreign key to property_listings table
-            $table->string('photo_path');
+            $table->string('photo_path')->nullable();
             $table->timestamps();
         });
     }

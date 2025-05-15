@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\Property;
 use App\Models\PropertyPhoto;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class PropertyController extends Controller
 {
@@ -123,6 +125,46 @@ class PropertyController extends Controller
         return $this->safeCall(function () {
             $count = Property::count();
             return $this->successResponse('Total property submissions count.', ['count' => $count]);
+        });
+    }
+
+    public function destroy($id)
+    {
+        return $this->safeCall(function () use ($id) {
+            // Find the property with its photos
+            $property = Property::with('photos')->find($id);
+
+            if (!$property) {
+                return $this->errorResponse('Property not found.', 404);
+            }
+
+            try {
+                // Begin transaction
+                \DB::beginTransaction();
+
+                // Delete photos from storage and database
+                foreach ($property->photos as $photo) {
+                    // Delete file from storage
+                    if (\Storage::disk('public')->exists($photo->photo_path)) {
+                        \Storage::disk('public')->delete($photo->photo_path);
+                    }
+                    // Delete photo record
+                    $photo->delete();
+                }
+
+                // Delete the property
+                $property->delete();
+
+                // Commit transaction
+                \DB::commit();
+
+                return $this->successResponse('Property deleted successfully.');
+
+            } catch (\Exception $e) {
+                // Rollback transaction on error
+                \DB::rollBack();
+                return $this->errorResponse('Failed to delete property: ' . $e->getMessage(), 500);
+            }
         });
     }
 }
