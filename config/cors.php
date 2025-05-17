@@ -23,11 +23,10 @@ return [
     'allowed_origins' => [
         'http://localhost:3000',
         'http://localhost:9422',
-        'http://localhost:9422/',
         'http://104.236.194.254:9422',
         'http://localhost:9423',
         'http://104.236.194.254:9423',
-],
+    ],
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
