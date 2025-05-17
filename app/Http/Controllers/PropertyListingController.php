@@ -19,7 +19,7 @@ class PropertyListingController extends Controller
     {
         return $this->safeCall(function () use ($request, $listing_website) {
             // If a listing_website is provided, filter the properties based on the website
-            $query = PropertyListing::with('photos')->get();
+            $query = PropertyListing::with('photos')->paginate(10);
 
             return $this->successResponse('Properties fetched successfully.', [
                 'data' => $query,
