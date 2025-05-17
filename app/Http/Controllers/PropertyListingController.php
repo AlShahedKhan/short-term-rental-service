@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Models\PropertyListing;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\PropertyListingPhoto;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 class PropertyListingController extends Controller
 {
@@ -60,7 +60,7 @@ class PropertyListingController extends Controller
         return $this->safeCall(function () use ($request, $id) {
             $propertyData = json_decode($request->input('data'), true);
 
-            $validatedData = \Validator::make($propertyData, [
+            $validatedData = Validator::make($propertyData, [
                 'title' => 'required|string|max:255',
                 'location' => 'required|string|max:255',
                 'bedrooms' => 'nullable|integer',

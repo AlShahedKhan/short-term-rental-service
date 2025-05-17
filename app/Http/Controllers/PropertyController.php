@@ -52,7 +52,6 @@ class PropertyController extends Controller
             ->orderBy('created_at', 'desc')  // Sort by 'created_at' in descending order
             ->paginate(3);  // Adjust the pagination per page
 
-        // Return the paginated items directly in the response (no wrapping in "data" key)
         return $this->successResponse('Properties retrieved successfully.', [
             'properties' => $properties->items(),  // List of items on the current page
             'pagination' => [
