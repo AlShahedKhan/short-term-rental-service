@@ -17,8 +17,17 @@ class ContactController extends Controller
     {
         // AuthHelper::checkAdmin();
         $contacts = Contact::paginate(25);
+
         ProcessContactData::dispatch($contacts);
-        return $this->successResponse('Contacts fetched successfully!', ['data' => $contacts]);
+
+        return $this->successResponse('Contacts fetched successfully!', [
+            'contacts' => $contacts->items(),
+            'pagination' => [
+                'current_page' => $contacts->currentPage(),
+                'total_pages' => $contacts->lastPage(),
+                'total_items' => $contacts->total(),
+            ]
+        ]);
     }
     public function getRecentContacts()
     {
