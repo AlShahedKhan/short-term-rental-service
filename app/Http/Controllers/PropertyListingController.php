@@ -70,7 +70,9 @@ class PropertyListingController extends Controller
                 'listing_website_link' => 'required|url',
                 'description' => 'required|string|max:1000',
                 'photos' => 'nullable|array',
-                'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+                // 'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:51200',
+
             ]);
 
             if ($validatedData->fails()) {
