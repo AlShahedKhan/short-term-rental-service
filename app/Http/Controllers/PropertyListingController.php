@@ -19,53 +19,24 @@ class PropertyListingController extends Controller
     {
         return $this->safeCall(function () use ($request, $listing_website) {
             // If a listing_website is provided, filter the properties based on the website
-            $query = PropertyListing::with('photos')->paginate(10);
+            $query = PropertyListing::with('photos');
+
+            if ($listing_website) {
+                $query->where('listing_website', $listing_website);
+            }
+
+            $properties = $query->orderBy('created_at', 'desc')->paginate(10);
 
             return $this->successResponse('Properties fetched successfully.', [
-                'data' => $query,
+                'properties' => $properties->items(),
+                'pagination' => [
+                    'current_page' => $properties->currentPage(),
+                    'total_pages' => $properties->lastPage(),
+                    'total_items' => $properties->total(),
+                ]
             ]);
-
         });
     }
-    // public function index(Request $request, $listing_website = null)
-    // {
-    //     return $this->safeCall(function () use ($request, $listing_website) {
-    //         // If a listing_website is provided, filter the properties based on the website
-    //         $query = PropertyListing::query();
-
-    //         if ($listing_website) {
-    //             // Assuming you have a 'website' column in your PropertyListing table that matches the listing_website
-    //             $query->where('listing_website', $listing_website);
-    //         }
-
-    //         // Retrieve properties, paginated with 10 per page (or change the number to your preference)
-    //         $properties = $query->paginate(10);
-
-    //         // Map the properties to the required structure
-    //         $propertyData = $properties->map(function ($property) {
-    //             return [
-    //                 'id' => $property->id,
-    //                 'image' => asset('storage/' . $property->photo_path), // Assuming photo_path is stored in 'storage'
-    //                 'title' => $property->title,
-    //                 'property_description' => $property->description,
-    //                 'date' => $property->created_at->toDateString(), // Formatting the date
-    //             ];
-    //         });
-
-    //         // Return the success response with pagination data
-    //         return $this->successResponse('Properties fetched successfully.', [
-    //             'data' => $propertyData,
-    //             'pagination' => [
-    //                 'total' => $properties->total(),
-    //                 'current_page' => $properties->currentPage(),
-    //                 'last_page' => $properties->lastPage(),
-    //                 'per_page' => $properties->perPage(),
-    //                 'from' => $properties->firstItem(),
-    //                 'to' => $properties->lastItem(),
-    //             ]
-    //         ]);
-    //     });
-    // }
 
     public function storeOrUpdate(Request $request, $id = null)
     {
